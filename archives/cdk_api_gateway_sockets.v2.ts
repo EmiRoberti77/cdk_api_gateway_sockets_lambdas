@@ -4,4 +4,4 @@ import * as cdk from "aws-cdk-lib";
 import { CdkApiGatewaySocketsStack } from "../lib/cdk_api_gateway_sockets-stack";
 
 const app = new cdk.App();
-new CdkApiGatewaySocketsStack(app, "emiCDKWebSocketApiStackV2", {});
+new CdkApiGatewaySocketsStack(app, "emiCDKWebSocketApiStack", {});

@@ -1,0 +1,5 @@
+{
+  "action": "sendMessage",
+  "connectionId": "<receiver's connection id>",
+  "message": "<message content>"
+}

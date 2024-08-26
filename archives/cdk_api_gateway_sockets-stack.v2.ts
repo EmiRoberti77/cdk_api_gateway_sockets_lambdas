@@ -13,8 +13,8 @@ export class CdkApiGatewaySocketsStack extends cdk.Stack {
     super(scope, id, props);
 
     //connect lambda
-    const connectLambda = new NodejsFunction(this, "wsEmiConnectLambda3", {
-      functionName: "wsEmiConnectLambda3",
+    const connectLambda = new NodejsFunction(this, "wsEmiConnectLambda", {
+      functionName: "wsEmiConnectLambda",
       handler: "handler",
       entry: path.join(
         __dirname,
@@ -36,8 +36,8 @@ export class CdkApiGatewaySocketsStack extends cdk.Stack {
     );
 
     //disconnect lambda
-    const disconnetLambda = new NodejsFunction(this, "wsEmiDisconnectLambda3", {
-      functionName: "wsEmiDiconnectLambda3",
+    const disconnetLambda = new NodejsFunction(this, "wsEmiDisconnectLambda", {
+      functionName: "wsEmiDiconnectLambda",
       handler: "handler",
       entry: path.join(
         __dirname,
@@ -59,8 +59,8 @@ export class CdkApiGatewaySocketsStack extends cdk.Stack {
     );
 
     //message lambda
-    const msgLambda = new NodejsFunction(this, "wsEmiMessageLambda3", {
-      functionName: "wsEmiMessageLambda3",
+    const msgLambda = new NodejsFunction(this, "wsEmiMessageLambda2", {
+      functionName: "wsEmiMessageLambda",
       handler: "handler",
       entry: path.join(
         __dirname,
@@ -81,37 +81,49 @@ export class CdkApiGatewaySocketsStack extends cdk.Stack {
       })
     );
 
-    // const wsapi = new WebSocketApi(this, "emiWSApi", {
-    //   connectRouteOptions: {
-    //     integration: new WebSocketLambdaIntegration(
-    //       "ws-connect-integration",
-    //       connectLambda
-    //     ),
-    //   },
-    //   disconnectRouteOptions: {
-    //     integration: new WebSocketLambdaIntegration(
-    //       "ws-disconnect-integration",
-    //       disconnetLambda
-    //     ),
-    //   },
-    //   routeSelectionExpression: "$request.body.action",
-    // });
+    const wsapi = new WebSocketApi(this, "emiWSApi", {
+      connectRouteOptions: {
+        integration: new WebSocketLambdaIntegration(
+          "ws-connect-integration",
+          connectLambda
+        ),
+      },
+      disconnectRouteOptions: {
+        integration: new WebSocketLambdaIntegration(
+          "ws-disconnect-integration",
+          disconnetLambda
+        ),
+      },
+    });
 
-    // const connectRoute = wsapi.addRoute("sendeMessage", {
-    //   integration: new WebSocketLambdaIntegration(
-    //     "ws-sendmessage-integration",
-    //     msgLambda
-    //   ),
-    // });
+    const connectRoute = wsapi.addRoute("sendeMessage", {
+      integration: new WebSocketLambdaIntegration(
+        "ws-sendmessage-integration",
+        msgLambda
+      ),
+    });
 
-    // const apiStage = new WebSocketStage(this, "DevStage", {
-    //   webSocketApi: wsapi,
-    //   stageName: "dev",
-    //   autoDeploy: true,
-    // });
+    const apiStage = new WebSocketStage(this, "DevStage", {
+      webSocketApi: wsapi,
+      stageName: "dev",
+      autoDeploy: true,
+    });
 
-    // new cdk.CfnOutput(this, "wss", {
-    //   value: wsapi.apiEndpoint,
-    // });
+    const connectionsArns = this.formatArn({
+      service: "execute-api",
+      resourceName: `${apiStage.stageName}/POST/*`,
+      resource: wsapi.apiId,
+    });
+
+    msgLambda.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["execute-api:ManageConnections"],
+        resources: [connectionsArns],
+      })
+    );
+
+    new cdk.CfnOutput(this, "api_endpoit", {
+      value: wsapi.apiEndpoint,
+    });
   }
 }
