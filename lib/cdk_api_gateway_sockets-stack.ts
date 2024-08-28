@@ -8,13 +8,15 @@ import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { Effect, ManagedPolicy, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { WebSocketLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 
+const V = "3";
+
 export class CdkApiGatewaySocketsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     //connect lambda
-    const connectLambda = new NodejsFunction(this, "wsEmiConnectLambda3", {
-      functionName: "wsEmiConnectLambda3",
+    const connectLambda = new NodejsFunction(this, "wsEmiConnectLambda" + V, {
+      functionName: "wsEmiConnectLambda" + V,
       handler: "handler",
       entry: path.join(
         __dirname,
@@ -36,19 +38,23 @@ export class CdkApiGatewaySocketsStack extends cdk.Stack {
     );
 
     //disconnect lambda
-    const disconnetLambda = new NodejsFunction(this, "wsEmiDisconnectLambda3", {
-      functionName: "wsEmiDiconnectLambda3",
-      handler: "handler",
-      entry: path.join(
-        __dirname,
-        "..",
-        "src",
-        "lambdas",
-        "lambdaDisconnect",
-        "handler.ts"
-      ),
-      runtime: Runtime.NODEJS_20_X,
-    });
+    const disconnetLambda = new NodejsFunction(
+      this,
+      "wsEmiDisconnectLambda" + V,
+      {
+        functionName: "wsEmiDiconnectLambda" + V,
+        handler: "handler",
+        entry: path.join(
+          __dirname,
+          "..",
+          "src",
+          "lambdas",
+          "lambdaDisconnect",
+          "handler.ts"
+        ),
+        runtime: Runtime.NODEJS_20_X,
+      }
+    );
 
     disconnetLambda.addToRolePolicy(
       new PolicyStatement({
@@ -59,8 +65,8 @@ export class CdkApiGatewaySocketsStack extends cdk.Stack {
     );
 
     //message lambda
-    const msgLambda = new NodejsFunction(this, "wsEmiMessageLambda3", {
-      functionName: "wsEmiMessageLambda3",
+    const msgLambda = new NodejsFunction(this, "wsEmiMessageLambda" + V, {
+      functionName: "wsEmiMessageLambda" + V,
       handler: "handler",
       entry: path.join(
         __dirname,
@@ -78,6 +84,33 @@ export class CdkApiGatewaySocketsStack extends cdk.Stack {
         effect: Effect.ALLOW,
         actions: ["*"],
         resources: ["*"],
+      })
+    );
+
+    //broadcastLambda
+    const broadCastLambda = new NodejsFunction(
+      this,
+      "wsEmiBroadCastLambda" + V,
+      {
+        functionName: "wsEmiBroadCastLambda" + V,
+        handler: "handler",
+        entry: path.join(
+          __dirname,
+          "..",
+          "src",
+          "lambdas",
+          "LambdaBroadcast",
+          "handler.ts"
+        ),
+        runtime: Runtime.NODEJS_20_X,
+      }
+    );
+
+    broadCastLambda.addToRolePolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        resources: ["*"],
+        actions: ["*"],
       })
     );
 

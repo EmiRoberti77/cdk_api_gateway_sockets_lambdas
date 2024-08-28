@@ -1,12 +1,12 @@
 import {
   APIGatewayProxyWebsocketEventV2,
   APIGatewayProxyResult,
-} from 'aws-lambda';
+} from "aws-lambda";
 import {
   ApiGatewayManagementApiClient,
   PostToConnectionCommand,
-} from '@aws-sdk/client-apigatewaymanagementapi';
-const ERROR = 'Error:httpsUrl is undefined';
+} from "@aws-sdk/client-apigatewaymanagementapi";
+const ERROR = "Error:httpsUrl is undefined";
 
 interface MessagePayload {
   action: string;
@@ -15,24 +15,24 @@ interface MessagePayload {
 }
 
 enum msgHandlerExceptions {
-  GONE_EXCEPTION = 'GoneException',
+  GONE_EXCEPTION = "GoneException",
 }
 
 export const handler = async (
   event: APIGatewayProxyWebsocketEventV2
 ): Promise<APIGatewayProxyResult> => {
-  console.log('v1');
+  console.log("v1");
   console.log(event);
   const connectionId = event.requestContext.connectionId;
   const endpoint = `https://${event.requestContext.domainName}/${event.requestContext.stage}`;
   //const connectionId = event.requestContext.connectionId;
   console.log(endpoint);
   const client = new ApiGatewayManagementApiClient({
-    apiVersion: '2018-11-29',
+    apiVersion: "2018-11-29",
     endpoint,
   });
   if (!event.body) {
-    const err = 'Error:missing body';
+    const err = "Error:missing body";
     console.error(err);
     throw new Error(err);
   }
@@ -40,16 +40,19 @@ export const handler = async (
   const message = eventBody.message;
   const payload = {
     ConnectionId: connectionId,
-    Data: '>' + message,
+    Data: JSON.stringify({
+      connectionId,
+      message,
+    }),
   };
-  console.log('PAYLOAD', payload);
+  console.log("PAYLOAD", payload);
   try {
     const command = new PostToConnectionCommand(payload);
     await client.send(command);
-    console.log('message posted');
+    console.log("message posted");
     return {
       statusCode: 200,
-      body: 'message sent',
+      body: "message sent",
     };
   } catch (error: any) {
     if (error.name === msgHandlerExceptions.GONE_EXCEPTION) {
@@ -58,10 +61,10 @@ export const handler = async (
       );
       return {
         statusCode: 410,
-        body: 'Connection is gone',
+        body: "Connection is gone",
       };
     } else {
-      console.error('Error posting to connection:', error);
+      console.error("Error posting to connection:", error);
       return { statusCode: 500, body: error.message };
     }
   }
