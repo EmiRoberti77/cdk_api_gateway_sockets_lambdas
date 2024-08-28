@@ -7,7 +7,7 @@ interface Message {
 }
 
 const body: Message = {
-  connectionId: "dNNv1f0aIAMCFNQ=",
+  connectionId: "dNRWvd4OIAMCL6g=",
   message: "testLambda",
   endpoint: `https://369eizuvs5.execute-api.us-east-1.amazonaws.com/dev`,
 };
