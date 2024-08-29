@@ -7,12 +7,20 @@ import path = require("path");
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { Effect, ManagedPolicy, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { WebSocketLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import * as dotenv from "dotenv";
+dotenv.config();
 
-const V = "3";
+const V = process.env.V!;
+const PROJECT = process.env.PROJECT!;
 
 export class CdkApiGatewaySocketsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    if (!V && !PROJECT) {
+      console.error("Error:env file not read");
+      return;
+    }
 
     //connect lambda
     const connectLambda = new NodejsFunction(this, "wsEmiConnectLambda" + V, {
@@ -88,23 +96,20 @@ export class CdkApiGatewaySocketsStack extends cdk.Stack {
     );
 
     //broadcastLambda
-    const broadCastLambda = new NodejsFunction(
-      this,
-      "wsEmiBroadCastLambda" + V,
-      {
-        functionName: "wsEmiBroadCastLambda" + V,
-        handler: "handler",
-        entry: path.join(
-          __dirname,
-          "..",
-          "src",
-          "lambdas",
-          "LambdaBroadcast",
-          "handler.ts"
-        ),
-        runtime: Runtime.NODEJS_20_X,
-      }
-    );
+    const broadCastLambdaName = `ws${PROJECT}BroadCastLambda${V}`;
+    const broadCastLambda = new NodejsFunction(this, broadCastLambdaName, {
+      functionName: broadCastLambdaName,
+      handler: "handler",
+      entry: path.join(
+        __dirname,
+        "..",
+        "src",
+        "lambdas",
+        "LambdaBroadcast",
+        "handler.ts"
+      ),
+      runtime: Runtime.NODEJS_20_X,
+    });
 
     broadCastLambda.addToRolePolicy(
       new PolicyStatement({
