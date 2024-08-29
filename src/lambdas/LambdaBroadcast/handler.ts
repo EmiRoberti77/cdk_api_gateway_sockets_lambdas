@@ -5,33 +5,53 @@ import {
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { HTTP_CODE, jsonApiProxyResultResponse } from "../../util";
 
+interface Location {
+  type: string;
+  coordinates: [number, number];
+}
+
+interface Metadata {
+  color: string;
+  icon: string;
+  x: number;
+  y: number;
+  triggered: string; // Assuming this is an ISO date string
+}
+
 interface Message {
+  variable: string;
+  value: string;
+  location: Location;
+  metadata: Metadata;
+}
+
+interface WSMessage {
+  message: Message;
   connectionId: string;
-  message: any;
   endpoint: string;
 }
 
 export const handler = async (
-  event: APIGatewayProxyEvent
+  event: WSMessage
 ): Promise<APIGatewayProxyResult> => {
-  if (!event.body) {
-    return jsonApiProxyResultResponse(HTTP_CODE.NOT_FOUND, {
-      succees: false,
-      body: "Error:missing body",
-    });
-  }
-
-  const message: Message = JSON.parse(event.body);
+  console.log("in handler");
+  console.log(event);
+  // if (!event.body) {
+  //   return jsonApiProxyResultResponse(HTTP_CODE.NOT_FOUND, {
+  //     succees: false,
+  //     body: "Error:missing body",
+  //   });
+  // }
 
   const client = new ApiGatewayManagementApiClient({
-    endpoint: message.endpoint,
+    endpoint: event.endpoint,
   });
 
   try {
     const response = await client.send(
       new PostToConnectionCommand({
-        ConnectionId: message.connectionId,
-        Data: JSON.stringify(message),
+        ConnectionId: event.connectionId,
+        Data: JSON.stringify(event.message),
       })
     );
     console.log(response);
@@ -39,9 +59,9 @@ export const handler = async (
     return jsonApiProxyResultResponse(HTTP_CODE.OK, {
       succees: true,
       body: {
-        connectionId: message.connectionId,
-        endpoint: message.endpoint,
-        message: message.message,
+        connectionId: event.connectionId,
+        endpoint: event.endpoint,
+        message: event.message,
       },
     });
   } catch (err: any) {

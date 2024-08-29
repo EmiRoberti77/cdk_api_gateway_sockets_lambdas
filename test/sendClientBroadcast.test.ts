@@ -1,4 +1,8 @@
 import { handler } from "../src/lambdas/LambdaBroadcastClient/handler";
+import * as dotenv from "dotenv";
+dotenv.config();
+
+const endpoint = process.env.ENDPOINT!;
 
 interface Message {
   connectionId: string;
@@ -6,31 +10,30 @@ interface Message {
   endpoint: string;
 }
 
-const body: Message = {
-  connectionId: "dQp5XdQeoAMCFSg=",
-  message: `{
-  "variable": "PN ASenna",
-  "value": "aberto",
-  "location": {
-    "type": "Point",
-    "coordinates": [-48.521309, -25.506428]
+const message = {
+  variable: "PN ASenna",
+  value: "aberto",
+  location: {
+    type: "Point",
+    coordinates: [-48.521309, -25.506428],
   },
-  "metadata": {
-    "color": "Black",
-    "icon": "train",
-    "x": 0.5,
-    "y": 0.5,
-    "triggered": "2024-07-18T13:56:07.785Z"
-  }
-}`,
-  endpoint: `https://c34zox9nmj.execute-api.us-east-1.amazonaws.com/dev`,
+  metadata: {
+    color: "Black",
+    icon: "train",
+    x: 0.5,
+    y: 0.5,
+    triggered: "2024-07-18T13:56:07.785Z",
+  },
 };
 
 const runTest = async (): Promise<void> => {
+  console.log(endpoint);
   const response = await handler({
-    httpMethod: "POST",
-    body: JSON.stringify(body),
-  } as any);
+    endpoint,
+    functionName: "wsrunmoBroadCastLambda3",
+    message,
+    connectionId: "dSJ1FerRoAMCKpA=",
+  });
 
   console.log(response);
 };

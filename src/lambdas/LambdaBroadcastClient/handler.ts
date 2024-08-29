@@ -3,7 +3,8 @@ import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 export interface BroadCastClientEvent {
   functionName: string;
   endpoint: string;
-  body: any;
+  connectionId: string;
+  message: any;
 }
 
 export interface BroadCastClientResult {
@@ -15,33 +16,31 @@ export const handler = async (
   event: BroadCastClientEvent
 ): Promise<BroadCastClientResult> => {
   try {
-    const payload = {
-      variable: "PN ASenna",
-      value: "aberto",
-      location: {
-        type: "Point",
-        coordinates: [-48.521309, -25.506428],
-      },
-      metadata: {
-        color: "Black",
-        icon: "train",
-        x: 0.5,
-        y: 0.5,
-        triggered: "2024-07-18T13:56:07.785Z",
-      },
+    const broadCastMessage = {
+      message: event.message,
+      connectionId: event.connectionId,
+      endpoint: event.endpoint,
     };
+
+    console.log(1);
+    const jsonClientMsg = JSON.stringify(broadCastMessage);
+    console.log(jsonClientMsg);
+    const payloadUint8Array = new TextEncoder().encode(jsonClientMsg);
+    console.log(2);
+    console.log(event.functionName);
     const client = new LambdaClient({});
     const command = new InvokeCommand({
       FunctionName: event.functionName,
       InvocationType: "RequestResponse",
-      Payload: JSON.stringify(payload),
+      Payload: payloadUint8Array,
     });
-
+    console.log(3);
     const response = await client.send(command);
-
+    const responsePayload = new TextDecoder("utf-8").decode(response.Payload);
+    console.log(4);
     return {
       statusCode: 200,
-      body: JSON.stringify(response),
+      body: responsePayload,
     };
   } catch (err: any) {
     return {
