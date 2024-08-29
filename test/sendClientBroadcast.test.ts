@@ -1,4 +1,4 @@
-import { handler } from "../src/lambdas/LambdaBroadcast/handler";
+import { handler } from "../src/lambdas/LambdaBroadcastClient/handler";
 
 interface Message {
   connectionId: string;
