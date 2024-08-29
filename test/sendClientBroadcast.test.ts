@@ -32,7 +32,7 @@ const runTest = async (): Promise<void> => {
     endpoint,
     functionName: "wsrunmoBroadCastLambda3",
     message,
-    connectionId: "dSJ1FerRoAMCKpA=",
+    connectionId: "dSRe2cK-IAMCE0g=",
   });
 
   console.log(response);

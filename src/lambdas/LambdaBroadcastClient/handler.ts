@@ -21,23 +21,16 @@ export const handler = async (
       connectionId: event.connectionId,
       endpoint: event.endpoint,
     };
-
-    console.log(1);
     const jsonClientMsg = JSON.stringify(broadCastMessage);
-    console.log(jsonClientMsg);
     const payloadUint8Array = new TextEncoder().encode(jsonClientMsg);
-    console.log(2);
-    console.log(event.functionName);
     const client = new LambdaClient({});
     const command = new InvokeCommand({
       FunctionName: event.functionName,
       InvocationType: "RequestResponse",
       Payload: payloadUint8Array,
     });
-    console.log(3);
     const response = await client.send(command);
     const responsePayload = new TextDecoder("utf-8").decode(response.Payload);
-    console.log(4);
     return {
       statusCode: 200,
       body: responsePayload,

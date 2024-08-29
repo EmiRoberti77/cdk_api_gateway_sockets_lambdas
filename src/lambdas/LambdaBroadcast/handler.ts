@@ -2,8 +2,10 @@ import {
   ApiGatewayManagementApiClient,
   PostToConnectionCommand,
 } from "@aws-sdk/client-apigatewaymanagementapi";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyResult } from "aws-lambda";
 import { HTTP_CODE, jsonApiProxyResultResponse } from "../../util";
+import { validateBroadCastMessage } from "../../ajv/jsonValidate";
+import { validateAdditionalItems } from "ajv/dist/vocabularies/applicator/additionalItems";
 
 interface Location {
   type: string;
@@ -34,14 +36,13 @@ interface WSMessage {
 export const handler = async (
   event: WSMessage
 ): Promise<APIGatewayProxyResult> => {
-  console.log("in handler");
-  console.log(event);
-  // if (!event.body) {
-  //   return jsonApiProxyResultResponse(HTTP_CODE.NOT_FOUND, {
-  //     succees: false,
-  //     body: "Error:missing body",
-  //   });
-  // }
+  const valid = validateBroadCastMessage(event);
+  if (!valid) {
+    return jsonApiProxyResultResponse(HTTP_CODE.NOT_FOUND, {
+      succees: false,
+      body: validateBroadCastMessage.errors,
+    });
+  }
 
   const client = new ApiGatewayManagementApiClient({
     endpoint: event.endpoint,
