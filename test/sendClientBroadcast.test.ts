@@ -4,12 +4,6 @@ dotenv.config();
 
 const endpoint = process.env.ENDPOINT!;
 
-interface Message {
-  connectionId: string;
-  message: any;
-  endpoint: string;
-}
-
 const message = {
   variable: "PN ASenna",
   value: "aberto",
@@ -34,8 +28,6 @@ const runTest = async (): Promise<void> => {
     message,
     connectionId: "dSRe2cK-IAMCE0g=",
   });
-
-  console.log(response);
 };
 
 runTest();
