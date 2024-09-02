@@ -1,4 +1,6 @@
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { HTTP_CODE, HTTP_METHOD, jsonApiProxyResultResponse } from "../../util";
 
 export interface BroadCastClientEvent {
   functionName: string;
@@ -13,19 +15,35 @@ export interface BroadCastClientResult {
 }
 
 export const handler = async (
-  event: BroadCastClientEvent
-): Promise<BroadCastClientResult> => {
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  if (event.httpMethod !== HTTP_METHOD.POST) {
+    return jsonApiProxyResultResponse(HTTP_CODE.NOT_FOUND, {
+      success: false,
+      body: "Error:httpMethod must be POST",
+    });
+  }
+  if (!event.body) {
+    return jsonApiProxyResultResponse(HTTP_CODE.NOT_FOUND, {
+      success: false,
+      body: "Error:missingBody",
+    });
+  }
+
+  const clientEvent: BroadCastClientEvent = JSON.parse(event.body);
+
   try {
-    const broadCastMessage = {
-      message: event.message,
-      connectionId: event.connectionId,
-      endpoint: event.endpoint,
-    };
-    const jsonClientMsg = JSON.stringify(broadCastMessage);
-    const payloadUint8Array = new TextEncoder().encode(jsonClientMsg);
+    console.log(clientEvent);
+    const payloadUint8Array = new TextEncoder().encode(
+      JSON.stringify({
+        message: clientEvent.message,
+        connectionId: clientEvent.connectionId,
+        endpoint: clientEvent.endpoint,
+      })
+    );
     const client = new LambdaClient({});
     const command = new InvokeCommand({
-      FunctionName: event.functionName,
+      FunctionName: clientEvent.functionName,
       InvocationType: "RequestResponse",
       Payload: payloadUint8Array,
     });

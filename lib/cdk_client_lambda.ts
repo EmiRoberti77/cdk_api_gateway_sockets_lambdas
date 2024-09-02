@@ -9,7 +9,9 @@ dotenv.config();
 
 const V = process.env.V!;
 const PROJECT = process.env.PROJECT!;
+
 export class BroadcastClientLambda extends cdk.Stack {
+  public broadcastClientLambda: NodejsFunction;
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -19,13 +21,13 @@ export class BroadcastClientLambda extends cdk.Stack {
     }
 
     const broadcastClientLambdaName = `ws${PROJECT}broadcastClientLamba${V}`;
-    const broadcastClientLambda = new NodejsFunction(
+    this.broadcastClientLambda = new NodejsFunction(
       this,
       broadcastClientLambdaName,
       {
         functionName: broadcastClientLambdaName,
         runtime: Runtime.NODEJS_20_X,
-        handler: "handler.ts",
+        handler: "handler",
         entry: path.join(
           __dirname,
           "..",
@@ -36,7 +38,8 @@ export class BroadcastClientLambda extends cdk.Stack {
         ),
       }
     );
-    broadcastClientLambda.addToRolePolicy(
+
+    this.broadcastClientLambda.addToRolePolicy(
       new PolicyStatement({
         effect: Effect.ALLOW,
         actions: ["*"],
