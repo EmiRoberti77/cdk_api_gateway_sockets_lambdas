@@ -16,6 +16,7 @@ const PROJECT = process.env.PROJECT!;
 
 export interface ApiGatewayBroadastProps extends StackProps {
   broadCastLambda: NodejsFunction;
+  registerConnectionLambda: NodejsFunction;
 }
 
 export class ApiGatewayBroadast extends Stack {
@@ -37,8 +38,21 @@ export class ApiGatewayBroadast extends Stack {
       props.broadCastLambda
     );
 
+    const registerConnectionIdLambdaIntegration = new LambdaIntegration(
+      props.registerConnectionLambda
+    );
+
     const apiResources = this.api.root.addResource("event", optionsWithCors);
     apiResources.addMethod(HTTP_METHOD.POST, brodacastLambdaIntegration);
+
+    const registerResources = this.api.root.addResource(
+      "connectionid",
+      optionsWithCors
+    );
+    registerResources.addMethod(
+      HTTP_METHOD.POST,
+      registerConnectionIdLambdaIntegration
+    );
 
     new CfnOutput(this, `${restApiName}UrlValue`, {
       value: this.api.url,
