@@ -1,5 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { HTTP_CODE, HTTP_METHOD, jsonApiProxyResultResponse } from "../../util";
+import { RegistrationDBHandler } from "./registrationDBHandler";
 
 export const handler = async (
   event: APIGatewayProxyEvent
@@ -17,8 +18,13 @@ export const handler = async (
     });
   }
 
-  return jsonApiProxyResultResponse(HTTP_CODE.OK, {
-    success: true,
-    body: JSON.parse(event.body),
-  });
+  try {
+    const handler = new RegistrationDBHandler(JSON.parse(event.body));
+    return await handler.register();
+  } catch (err: any) {
+    return jsonApiProxyResultResponse(HTTP_CODE.OK, {
+      success: false,
+      body: err.message,
+    });
+  }
 };
