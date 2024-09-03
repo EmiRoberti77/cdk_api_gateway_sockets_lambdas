@@ -53,6 +53,10 @@ export class ApiGatewayBroadast extends Stack {
       HTTP_METHOD.POST,
       registerConnectionIdLambdaIntegration
     );
+    registerResources.addMethod(
+      HTTP_METHOD.GET,
+      registerConnectionIdLambdaIntegration
+    );
 
     new CfnOutput(this, `${restApiName}UrlValue`, {
       value: this.api.url,

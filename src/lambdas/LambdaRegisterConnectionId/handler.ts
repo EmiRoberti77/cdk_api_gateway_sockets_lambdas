@@ -5,26 +5,40 @@ import { RegistrationDBHandler } from "./registrationDBHandler";
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  if (event.httpMethod !== HTTP_METHOD.POST) {
-    return jsonApiProxyResultResponse(HTTP_CODE.NOT_FOUND, {
-      success: true,
-      body: "Error:use POST",
-    });
-  }
-  if (!event.body) {
-    return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
-      success: true,
-      body: "Error:missing body",
-    });
-  }
-
-  try {
-    const handler = new RegistrationDBHandler(JSON.parse(event.body));
-    return await handler.register();
-  } catch (err: any) {
-    return jsonApiProxyResultResponse(HTTP_CODE.OK, {
-      success: false,
-      body: err.message,
-    });
+  let handler: RegistrationDBHandler;
+  switch (event.httpMethod) {
+    case HTTP_METHOD.POST:
+      if (!event.body) {
+        return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
+          success: false,
+          body: "Error:missing body",
+        });
+      }
+      handler = new RegistrationDBHandler(JSON.parse(event.body));
+      return await handler.register();
+    case HTTP_METHOD.GET:
+      handler = new RegistrationDBHandler();
+      if (!event.queryStringParameters) {
+        return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
+          success: false,
+          body: "Error:missing query strings",
+        });
+      }
+      const { id, site } = event.queryStringParameters;
+      if (!id || !site) {
+        return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
+          success: false,
+          body: "Error:missing id or site in the query string",
+        });
+      }
+      console.log(event.queryStringParameters);
+      console.log("id", id);
+      console.log("site", site);
+      return await handler.getConnectionClient({ id, site });
+    default:
+      return jsonApiProxyResultResponse(HTTP_CODE.NOT_FOUND, {
+        success: true,
+        body: `Error:${event.httpMethod} not supported`,
+      });
   }
 };
