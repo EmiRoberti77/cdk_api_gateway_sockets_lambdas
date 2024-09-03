@@ -4,6 +4,7 @@ import { RegistrationDBHandler } from "../src/lambdas/LambdaRegisterConnectionId
 async function getConnection(con: ConDetailsRequest): Promise<boolean> {
   try {
     const dbHandler = new RegistrationDBHandler(undefined);
+    //const response = await dbHandler.getAllConnectionClients();
     const response = await dbHandler.getConnectionClient(con);
 
     console.log(response);
@@ -16,5 +17,5 @@ async function getConnection(con: ConDetailsRequest): Promise<boolean> {
 
 getConnection({
   id: "1",
-  site: "channel1",
+  site: "site1#channel1",
 });

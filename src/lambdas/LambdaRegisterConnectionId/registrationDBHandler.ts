@@ -1,12 +1,15 @@
 import { APIGatewayProxyCallback, APIGatewayProxyResult } from "aws-lambda";
 import { HTTP_CODE, jsonApiProxyResultResponse } from "../../util";
 import { RegistrationParams } from "./model/registrationParams";
-import { DynamoDBClient, QueryCommandInput } from "@aws-sdk/client-dynamodb";
 import {
-  DynamoDBDocumentClient,
-  PutCommand,
+  DynamoDBClient,
+  QueryCommandInput,
+  ScanCommand,
   QueryCommand,
-} from "@aws-sdk/lib-dynamodb";
+  ScanCommandInput,
+} from "@aws-sdk/client-dynamodb";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
+import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { ConDetailsRequest } from "./model/conDetailsRequest";
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -44,13 +47,6 @@ export class RegistrationDBHandler {
     conDetails: ConDetailsRequest
   ): Promise<APIGatewayProxyResult> {
     try {
-      console.log("Input ID:", conDetails.id, "Type:", typeof conDetails.id);
-      console.log(
-        "Input Site:",
-        conDetails.site,
-        "Type:",
-        typeof conDetails.site
-      );
       const params: QueryCommandInput = {
         TableName: process.env.TABLE_NAME,
         KeyConditionExpression: "#id = :id AND #site = :site",
@@ -63,9 +59,32 @@ export class RegistrationDBHandler {
           ":site": { S: conDetails.site },
         },
       };
-      console.log("query");
+
       const response = await this.dbClient.send(new QueryCommand(params));
       console.log(response);
+      let connectionObject = {};
+      if (response.Items && response.Items?.length > 0) {
+        connectionObject = unmarshall(response.Items[0]);
+      }
+      return jsonApiProxyResultResponse(HTTP_CODE.OK, {
+        success: true,
+        body: connectionObject,
+      });
+    } catch (err: any) {
+      console.error(err);
+      return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
+        success: false,
+        body: err.message,
+      });
+    }
+  }
+
+  public async getAllConnectionClients(): Promise<APIGatewayProxyResult> {
+    try {
+      const p: ScanCommandInput = {
+        TableName: process.env.TABLE_NAME,
+      };
+      const response = await this.dbClient.send(new ScanCommand(p));
       return jsonApiProxyResultResponse(HTTP_CODE.OK, {
         success: true,
         body: response.Items,
@@ -77,14 +96,5 @@ export class RegistrationDBHandler {
         body: err.message,
       });
     }
-  }
-
-  private async allConnectionClients(): Promise<APIGatewayProxyResult> {
-    return jsonApiProxyResultResponse(HTTP_CODE.OK, {
-      success: true,
-      body: {
-        function: "allConnectionClients",
-      },
-    });
   }
 }
