@@ -20,9 +20,11 @@ export class RegistrationDBHandler {
   private documentClient = DynamoDBDocumentClient.from(this.dbClient);
   constructor(registration: RegistrationParams | undefined = undefined) {
     this.registration = registration;
+    console.log("in constructor", this.registration);
   }
 
   public async register(): Promise<APIGatewayProxyResult> {
+    console.log("in register");
     try {
       const params = {
         TableName: process.env.TABLE_NAME,
@@ -47,6 +49,7 @@ export class RegistrationDBHandler {
     conDetails: ConDetailsRequest
   ): Promise<APIGatewayProxyResult> {
     try {
+      console.log(conDetails);
       const params: QueryCommandInput = {
         TableName: process.env.TABLE_NAME,
         KeyConditionExpression: "#id = :id AND #site = :site",
@@ -60,6 +63,7 @@ export class RegistrationDBHandler {
         },
       };
 
+      console.log("checking db");
       const response = await this.dbClient.send(new QueryCommand(params));
       console.log(response);
       let connectionObject = {};

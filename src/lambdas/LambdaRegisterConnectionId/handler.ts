@@ -6,6 +6,7 @@ export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   let handler: RegistrationDBHandler;
+  console.log(event);
   switch (event.httpMethod) {
     case HTTP_METHOD.POST:
       if (!event.body) {
@@ -14,6 +15,7 @@ export const handler = async (
           body: "Error:missing body",
         });
       }
+      console.log("constructing RegistrationDBHandler");
       handler = new RegistrationDBHandler(JSON.parse(event.body));
       return await handler.register();
     case HTTP_METHOD.GET:

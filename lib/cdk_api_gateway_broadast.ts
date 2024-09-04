@@ -1,9 +1,13 @@
 import { CfnOutput, Stack, StackProps } from "aws-cdk-lib";
 import {
+  ApiKey,
   Cors,
   LambdaIntegration,
+  MethodOptions,
+  Period,
   ResourceOptions,
   RestApi,
+  UsagePlan,
 } from "aws-cdk-lib/aws-apigateway";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Construct } from "constructs";
@@ -42,6 +46,10 @@ export class ApiGatewayBroadast extends Stack {
       props.registerConnectionLambda
     );
 
+    const methodOptionsWithApiKeyRequired: MethodOptions = {
+      apiKeyRequired: true,
+    };
+
     const apiResources = this.api.root.addResource("event", optionsWithCors);
     apiResources.addMethod(HTTP_METHOD.POST, brodacastLambdaIntegration);
 
@@ -51,13 +59,46 @@ export class ApiGatewayBroadast extends Stack {
     );
     registerResources.addMethod(
       HTTP_METHOD.POST,
-      registerConnectionIdLambdaIntegration
+      registerConnectionIdLambdaIntegration,
+      methodOptionsWithApiKeyRequired
     );
     registerResources.addMethod(
       HTTP_METHOD.GET,
-      registerConnectionIdLambdaIntegration
+      registerConnectionIdLambdaIntegration,
+      methodOptionsWithApiKeyRequired
     );
+    // Create an API Key
+    const apiKey = new ApiKey(this, "rumoApiKeyBroacastApi", {
+      apiKeyName: `${PROJECT}ApiKeyBroacast${V}`,
+      description: "API key for accessing the API",
+      enabled: true,
+    });
+    // Create a Usage Plan
+    const usagePlan = new UsagePlan(this, "UsagePlan", {
+      name: `${PROJECT}UsagePlan${V}`,
+      description: "Usage plan for the API",
+      apiStages: [
+        {
+          api: this.api,
+          stage: this.api.deploymentStage,
+        },
+      ],
+      throttle: {
+        rateLimit: 100,
+        burstLimit: 200,
+      },
+      quota: {
+        limit: 100000,
+        period: Period.MONTH,
+      },
+    });
 
+    usagePlan.addApiKey(apiKey);
+
+    new CfnOutput(this, "ApiKeyValue", {
+      value: apiKey.keyId,
+      description: "The API key for accessing the REST API",
+    });
     new CfnOutput(this, `${restApiName}UrlValue`, {
       value: this.api.url,
     });
