@@ -1,5 +1,9 @@
 import { APIGatewayProxyCallback, APIGatewayProxyResult } from "aws-lambda";
-import { HTTP_CODE, jsonApiProxyResultResponse } from "../../util";
+import {
+  HTTP_CODE,
+  jsonApiProxyResultResponse,
+  validateIsoString,
+} from "../../util";
 import { RegistrationParams } from "./model/registrationParams";
 import {
   DynamoDBClient,
@@ -12,6 +16,10 @@ import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { ConDetailsRequest } from "./model/conDetailsRequest";
 import * as dotenv from "dotenv";
+import {
+  ERROR_invalid_iso_date,
+  ERROR_llastActiveStateDateTime,
+} from "./constants";
 dotenv.config();
 
 export class RegistrationDBHandler {
@@ -24,7 +32,22 @@ export class RegistrationDBHandler {
   }
 
   public async register(): Promise<APIGatewayProxyResult> {
-    console.log("in register");
+    if (this.registration)
+      this.registration.connectionOpenedDateTime = new Date().toISOString();
+
+    if (!this.registration?.lastActiveStateDateTime) {
+      return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
+        succes: false,
+        body: ERROR_llastActiveStateDateTime,
+      });
+    }
+
+    if (!validateIsoString(this.registration?.lastActiveStateDateTime)) {
+      return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
+        succes: false,
+        body: ERROR_invalid_iso_date,
+      });
+    }
     try {
       const params = {
         TableName: process.env.TABLE_NAME,
@@ -73,6 +96,42 @@ export class RegistrationDBHandler {
       return jsonApiProxyResultResponse(HTTP_CODE.OK, {
         success: true,
         body: connectionObject,
+      });
+    } catch (err: any) {
+      console.error(err);
+      return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
+        success: false,
+        body: err.message,
+      });
+    }
+  }
+
+  public async getConnectionsClient(
+    id: string
+  ): Promise<APIGatewayProxyResult> {
+    try {
+      const params: QueryCommandInput = {
+        TableName: process.env.TABLE_NAME,
+        KeyConditionExpression: "#id = :id",
+        ExpressionAttributeNames: {
+          "#id": "id",
+        },
+        ExpressionAttributeValues: {
+          ":id": { S: id },
+        },
+      };
+
+      console.log("checking db");
+      const response = await this.dbClient.send(new QueryCommand(params));
+      console.log(response);
+
+      let connections: any[] = [];
+      if (response.Items && response.Items?.length > 0) {
+        connections = response.Items.map((conection) => unmarshall(conection));
+      }
+      return jsonApiProxyResultResponse(HTTP_CODE.OK, {
+        success: true,
+        body: connections,
       });
     } catch (err: any) {
       console.error(err);

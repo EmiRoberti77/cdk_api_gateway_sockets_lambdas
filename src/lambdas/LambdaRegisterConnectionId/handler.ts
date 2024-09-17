@@ -1,6 +1,12 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { HTTP_CODE, HTTP_METHOD, jsonApiProxyResultResponse } from "../../util";
 import { RegistrationDBHandler } from "./registrationDBHandler";
+import {
+  ERROR_body,
+  ERROR_httpMethod,
+  ERROR_missing_id,
+  ERROR_queryString,
+} from "./constants";
 
 export const handler = async (
   event: APIGatewayProxyEvent
@@ -12,10 +18,9 @@ export const handler = async (
       if (!event.body) {
         return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
           success: false,
-          body: "Error:missing body",
+          body: ERROR_body,
         });
       }
-      console.log("constructing RegistrationDBHandler");
       handler = new RegistrationDBHandler(JSON.parse(event.body));
       return await handler.register();
     case HTTP_METHOD.GET:
@@ -23,24 +28,21 @@ export const handler = async (
       if (!event.queryStringParameters) {
         return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
           success: false,
-          body: "Error:missing query strings",
+          body: ERROR_queryString,
         });
       }
-      const { id, site } = event.queryStringParameters;
-      if (!id || !site) {
+      const { id } = event.queryStringParameters;
+      if (!id) {
         return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
           success: false,
-          body: "Error:missing id or site in the query string",
+          body: ERROR_missing_id,
         });
       }
-      console.log(event.queryStringParameters);
-      console.log("id", id);
-      console.log("site", site);
-      return await handler.getConnectionClient({ id, site });
+      return await handler.getConnectionsClient(id);
     default:
       return jsonApiProxyResultResponse(HTTP_CODE.NOT_FOUND, {
         success: true,
-        body: `Error:${event.httpMethod} not supported`,
+        body: ERROR_httpMethod(event.httpMethod),
       });
   }
 };
