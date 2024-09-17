@@ -31,14 +31,28 @@ export const handler = async (
           body: ERROR_queryString,
         });
       }
-      const { id } = event.queryStringParameters;
-      if (!id) {
+      const { id: getid } = event.queryStringParameters;
+      if (!getid) {
         return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
           success: false,
           body: ERROR_missing_id,
         });
       }
-      return await handler.getConnectionsClient(id);
+      return await handler.getConnectionsClient(getid);
+    case HTTP_METHOD.DELETE:
+      const { id: deleteId, site: deleteSiteId } =
+        event.queryStringParameters || {};
+      if (!deleteId || !deleteSiteId) {
+        return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
+          success: false,
+          body: ERROR_missing_id,
+        });
+      }
+      handler = new RegistrationDBHandler();
+      return await handler.DeleteConnection({
+        id: deleteId,
+        site: deleteSiteId,
+      });
     default:
       return jsonApiProxyResultResponse(HTTP_CODE.NOT_FOUND, {
         success: true,

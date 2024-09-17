@@ -13,10 +13,16 @@ import {
   ScanCommandInput,
 } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
-import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  DeleteCommand,
+  DeleteCommandInput,
+  DynamoDBDocumentClient,
+  PutCommand,
+} from "@aws-sdk/lib-dynamodb";
 import { ConDetailsRequest } from "./model/conDetailsRequest";
 import * as dotenv from "dotenv";
 import {
+  CONNECTION_DELETED,
   ERROR_invalid_iso_date,
   ERROR_llastActiveStateDateTime,
 } from "./constants";
@@ -68,6 +74,9 @@ export class RegistrationDBHandler {
     }
   }
 
+  /**
+   * @deprecated This method is deprecated. Use `getConnectionsClient()` instead.
+   */
   public async getConnectionClient(
     conDetails: ConDetailsRequest
   ): Promise<APIGatewayProxyResult> {
@@ -136,6 +145,34 @@ export class RegistrationDBHandler {
     } catch (err: any) {
       console.error(err);
       return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
+        success: false,
+        body: err.message,
+      });
+    }
+  }
+
+  public async DeleteConnection({
+    id,
+    site,
+  }: {
+    id: string;
+    site: string;
+  }): Promise<APIGatewayProxyResult> {
+    try {
+      const params: DeleteCommandInput = {
+        TableName: process.env.TABLE_NAME,
+        Key: {
+          id: id,
+          site: site,
+        },
+      };
+      const response = await this.dbClient.send(new DeleteCommand(params));
+      return jsonApiProxyResultResponse(HTTP_CODE.OK, {
+        success: true,
+        body: CONNECTION_DELETED,
+      });
+    } catch (err: any) {
+      return jsonApiProxyResultResponse(HTTP_CODE.OK, {
         success: false,
         body: err.message,
       });

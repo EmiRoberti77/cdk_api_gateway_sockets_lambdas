@@ -11,6 +11,7 @@ export enum HTTP_CODE {
 export enum HTTP_METHOD {
   GET = "GET",
   POST = "POST",
+  DELETE = "DELETE",
 }
 
 export function addCorsHeader(arg: APIGatewayProxyResult) {

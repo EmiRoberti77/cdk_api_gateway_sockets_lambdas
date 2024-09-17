@@ -67,6 +67,12 @@ export class ApiGatewayBroadast extends Stack {
       registerConnectionIdLambdaIntegration,
       methodOptionsWithApiKeyRequired
     );
+
+    registerResources.addMethod(
+      HTTP_METHOD.DELETE,
+      registerConnectionIdLambdaIntegration,
+      methodOptionsWithApiKeyRequired
+    );
     // Create an API Key
     const apiKey = new ApiKey(this, "rumoApiKeyBroacastApi", {
       apiKeyName: `${PROJECT}ApiKeyBroacast${V}`,
