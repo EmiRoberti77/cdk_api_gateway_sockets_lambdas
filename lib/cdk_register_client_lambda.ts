@@ -1,5 +1,10 @@
 import * as cdk from "aws-cdk-lib";
-import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
+import {
+  AttributeType,
+  BillingMode,
+  Table,
+  ProjectionType,
+} from "aws-cdk-lib/aws-dynamodb";
 import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
@@ -33,6 +38,15 @@ export class RegisterConnectionIdLambda extends cdk.Stack {
       },
       billingMode: BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    table.addGlobalSecondaryIndex({
+      indexName: "connectionIdIndex",
+      partitionKey: {
+        name: "connectionId",
+        type: AttributeType.STRING,
+      },
+      projectionType: ProjectionType.ALL,
     });
 
     const broadcastClientLambdaName = `${PROJECT}RegisterConnectionIdLambda${V}`;

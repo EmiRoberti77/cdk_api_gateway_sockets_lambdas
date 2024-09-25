@@ -26,6 +26,8 @@ import {
   ERROR_invalid_iso_date,
   ERROR_llastActiveStateDateTime,
 } from "./constants";
+import { Succeed } from "aws-cdk-lib/aws-stepfunctions";
+import { connect } from "http2";
 dotenv.config();
 
 export class RegistrationDBHandler {
@@ -129,8 +131,6 @@ export class RegistrationDBHandler {
           ":id": { S: id },
         },
       };
-
-      console.log("checking db");
       const response = await this.dbClient.send(new QueryCommand(params));
       console.log(response);
 
@@ -151,31 +151,53 @@ export class RegistrationDBHandler {
     }
   }
 
+  //declate deleteConnection overloads
+  public async DeleteConnection(
+    connectionId: string
+  ): Promise<APIGatewayProxyResult>;
   public async DeleteConnection({
     id,
     site,
   }: {
     id: string;
     site: string;
-  }): Promise<APIGatewayProxyResult> {
-    try {
-      const params: DeleteCommandInput = {
-        TableName: process.env.TABLE_NAME,
-        Key: {
-          id: id,
-          site: site,
-        },
-      };
-      const response = await this.dbClient.send(new DeleteCommand(params));
+  }): Promise<APIGatewayProxyResult>;
+
+  //implementation of deleteConnection
+  public async DeleteConnection(
+    delParams: string | { id: string; site: string }
+  ): Promise<APIGatewayProxyResult> {
+    if (typeof delParams === "string") {
+      // If the input is a string, use it as the connectionId (id)
       return jsonApiProxyResultResponse(HTTP_CODE.OK, {
-        success: true,
-        body: CONNECTION_DELETED,
+        succes: true,
+        message: "temp implementation",
+        connectionId: delParams,
       });
-    } catch (err: any) {
-      return jsonApiProxyResultResponse(HTTP_CODE.OK, {
-        success: false,
-        body: err.message,
-      });
+    } else {
+      // If the input is an object, destructure id and site
+      try {
+        const { id, site } = delParams;
+        const params: DeleteCommandInput = {
+          TableName: process.env.TABLE_NAME,
+          Key: {
+            id: id,
+            site: site,
+          },
+        };
+
+        const response = await this.dbClient.send(new DeleteCommand(params));
+
+        return jsonApiProxyResultResponse(HTTP_CODE.OK, {
+          success: true,
+          body: CONNECTION_DELETED,
+        });
+      } catch (err: any) {
+        return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
+          success: false,
+          message: err.message,
+        });
+      }
     }
   }
 

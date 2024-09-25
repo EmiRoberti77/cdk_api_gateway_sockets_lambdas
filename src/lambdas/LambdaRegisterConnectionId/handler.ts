@@ -7,6 +7,7 @@ import {
   ERROR_missing_id,
   ERROR_queryString,
 } from "./constants";
+import { DeleteConnectionHandler } from "./util/deleteConnectionHandler";
 
 export const handler = async (
   event: APIGatewayProxyEvent
@@ -40,19 +41,23 @@ export const handler = async (
       }
       return await handler.getConnectionsClient(getid);
     case HTTP_METHOD.DELETE:
-      const { id: deleteId, site: deleteSiteId } =
-        event.queryStringParameters || {};
-      if (!deleteId || !deleteSiteId) {
-        return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
-          success: false,
-          body: ERROR_missing_id,
-        });
-      }
-      handler = new RegistrationDBHandler();
-      return await handler.DeleteConnection({
-        id: deleteId,
-        site: deleteSiteId,
-      });
+      //this method has two modes.
+      // a delete can be performed by ( id & site ) or by ( connectionId )
+      const deleteHandler = new DeleteConnectionHandler(event);
+      return await deleteHandler.deleteConnection();
+    // const { id: deleteId, site: deleteSiteId } =
+    //   event.queryStringParameters || {};
+    // if (!deleteId || !deleteSiteId) {
+    //   return jsonApiProxyResultResponse(HTTP_CODE.ERROR, {
+    //     success: false,
+    //     body: ERROR_missing_id,
+    //   });
+    // }
+    // handler = new RegistrationDBHandler();
+    // return await handler.DeleteConnection({
+    //   id: deleteId,
+    //   site: deleteSiteId,
+    // });
     default:
       return jsonApiProxyResultResponse(HTTP_CODE.NOT_FOUND, {
         success: true,
