@@ -7,4 +7,5 @@ export const ERROR_body = "Error:missing body";
 export const ERROR_missing_id = "Error:missing id";
 export const ERROR_httpMethod = (httpMethod: string) =>
   `Error:${httpMethod} not supported`;
-export const CONNECTION_DELETED = "conncetion deleted";
+export const CONNECTION_DELETED = (id: string, site: string) =>
+  `conncetion deleted {id:${id}, site:${site}}`;
